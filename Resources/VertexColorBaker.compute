@@ -1,0 +1,120 @@
+#pragma kernel CSMain
+
+StructuredBuffer<float3> _Vertices;
+StructuredBuffer<float3> _Normals;
+StructuredBuffer<int> _Triangles;
+RWStructuredBuffer<float4> _Colors;
+
+float _TriangleCount;
+float _VertexCount;
+
+float4 _SampleKernel[512];
+float _SampleCount;
+
+float _SurfaceBias;
+
+float _CurvatureMaxDist;
+float2 _CurvatureRange;
+float _OcclusionMaxDist;
+float _OcclusionRayBias;
+float _OcclusionExponent;
+
+float4 _CurvatureChannels;
+float4 _OcclusionChannels;
+
+// https://iquilezles.org/articles/intersectors/
+float TriIntersect(float3 ro, float3 rd, float3 v0, float3 v1, float3 v2)
+{
+    float3 v1v0 = v1 - v0;
+    float3 v2v0 = v2 - v0;
+    float3 rov0 = ro - v0;
+    float3 n = cross(v1v0, v2v0);
+    float3 q = cross(rov0, rd);
+    float d = 1.0 / dot(rd, n);
+    float u = d * dot(-q, v2v0);
+    float v = d * dot( q, v1v0);
+    float t = d * dot(-n, rov0);
+
+	float side = dot(cross(v1v0, v2v0), rov0);
+
+    if (u < 0.0 || v < 0.0 || (u+v) > 1.0)
+	{
+		t = -1.0;
+	}
+	return t;
+}
+
+float RayTest(float3 rayStart, float3 rayDir, float maxDist = 1e10)
+{
+	float t = -1.0;
+
+	for (int i = 0; i < _TriangleCount; i++)
+	{
+		float3 v0 = _Vertices[_Triangles[i*3+0]];
+		float3 v1 = _Vertices[_Triangles[i*3+1]];
+		float3 v2 = _Vertices[_Triangles[i*3+2]];
+
+		float ti = TriIntersect(rayStart, rayDir, v0, v1, v2);
+
+		if (ti > 0 && ti < maxDist)
+		{
+			if (t > 0)
+			{
+				t = min(t, ti);
+			}
+			else
+			{
+				t = ti;
+			}
+		}
+	}
+
+	return t;
+}
+
+[numthreads(16, 1, 1)]
+void CSMain(uint3 id : SV_DispatchThreadID)
+{
+	int i = id.x;
+
+	if (i >= _VertexCount)
+	{
+		return;
+	}
+
+	float3 position = _Vertices[i];
+	float3 normal = _Normals[i];
+	float4 color = _Colors[i];
+
+	position += normal * _SurfaceBias;
+
+	// CURVATURE
+	float convexity = 0.0;
+	for (int j = 0; j < _SampleCount; j++)
+	{
+		float3 dir = _SampleKernel[j].xyz;
+		convexity += RayTest(position, dir, _CurvatureMaxDist) < 0;
+	}
+	convexity /= _SampleCount;
+
+	convexity = smoothstep(_CurvatureRange.x, _CurvatureRange.y, convexity);
+
+	color = lerp(color, convexity, _CurvatureChannels);
+
+	// OCCLUSION
+	float occlusion = 0.0;
+	for (int j = 0; j < _SampleCount; j++)
+	{
+		float3 dir = _SampleKernel[j].xyz;
+		dir *= sign(dot(dir, normal));
+		dir = normalize(lerp(dir, normal, _OcclusionRayBias));
+		occlusion += RayTest(position, dir, _OcclusionMaxDist) < 0;
+	}
+	occlusion /= _SampleCount;
+
+	occlusion = pow(occlusion, _OcclusionExponent);
+
+	color = lerp(color, occlusion, _OcclusionChannels);
+
+	_Colors[i] = color;
+}
