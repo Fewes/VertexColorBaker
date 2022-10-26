@@ -11,6 +11,8 @@ An [AssetPostprocessor](https://docs.unity3d.com/ScriptReference/AssetPostproces
 
 Note that because it is implemented as an AssetPostprocessor, it will automatically rebake if the mesh changes or the project is reimported.
 
+Also note that each mesh within the FBX file is baked separately, meaning they cannot receive occlusion from each other.
+
 # Bake types
 
 ## Curvature
