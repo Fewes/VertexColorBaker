@@ -8,10 +8,9 @@ public class VertexColorBaker : AssetPostprocessor
 {
 	private void OnPostprocessModel(GameObject gameObject)
 	{
-		if (assetPath.IndexOf(".fbx") == -1)
-		{
+		if (assetPath.EndsWith(".fbx") == false &&
+			assetPath.EndsWith(".FBX") == false)
 			return;
-		}
 
 		int lastPeriod = assetImporter.assetPath.LastIndexOf('.');
 
@@ -34,12 +33,24 @@ public class VertexColorBaker : AssetPostprocessor
 			return;
 		}
 
+		
+		// For MeshRenderer
 		MeshFilter[] meshFilters = gameObject.GetComponentsInChildren<MeshFilter>();
 		foreach (MeshFilter meshFilter in meshFilters)
 		{
 			if (meshFilter.sharedMesh != null)
 			{
 				ProcessMesh(meshFilter.sharedMesh, config);
+			}
+		}
+
+		// For SkinnedMeshRenderer
+		SkinnedMeshRenderer[] skinnedMeshRenderers = gameObject.GetComponentsInChildren<SkinnedMeshRenderer>();
+		foreach(SkinnedMeshRenderer skinnedMeshRenderer in skinnedMeshRenderers)
+		{
+			if (skinnedMeshRenderer != null)
+			{
+				ProcessMesh(skinnedMeshRenderer.sharedMesh, config);
 			}
 		}
 	}
