@@ -33,6 +33,8 @@ public class VertexColorBaker : AssetPostprocessor
 			return;
 		}
 
+		
+		// For MeshRenderer
 		MeshFilter[] meshFilters = gameObject.GetComponentsInChildren<MeshFilter>();
 		foreach (MeshFilter meshFilter in meshFilters)
 		{
@@ -41,23 +43,16 @@ public class VertexColorBaker : AssetPostprocessor
 				ProcessMesh(meshFilter.sharedMesh, config);
 			}
 		}
-		
-		// For MeshRenderer
-		var meshFilters = gameObject.GetComponentsInChildren<MeshFilter>();
-		foreach (var meshFilter in meshFilters)
-		{
-			if (meshFilter.sharedMesh != null)
-				ProcessMesh(meshFilter.sharedMesh, config);
-		}
 
 		// For SkinnedMeshRenderer
-		var skinnedMeshRenderers = gameObject.GetComponentsInChildren<SkinnedMeshRenderer>();
-		foreach(var skinnedMeshRenderer in skinnedMeshRenderers)
-		{
+		SkinnedMeshRenderer[] skinnedMeshRenderers = gameObject.GetComponentsInChildren<SkinnedMeshRenderer>();
+		foreach(SkinnedMeshRenderer skinnedMeshRenderer in skinnedMeshRenderers)
+        	{
 			if (skinnedMeshRenderer != null)
+            		{
 				ProcessMesh(skinnedMeshRenderer.sharedMesh, config);
+			}
 		}
-
 	}
 
 	private void ProcessMesh(Mesh mesh, VertexColorBakeConfig config)
