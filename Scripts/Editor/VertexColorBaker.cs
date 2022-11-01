@@ -47,7 +47,7 @@ public class VertexColorBaker : AssetPostprocessor
 		// For SkinnedMeshRenderer
 		SkinnedMeshRenderer[] skinnedMeshRenderers = gameObject.GetComponentsInChildren<SkinnedMeshRenderer>();
 		foreach(SkinnedMeshRenderer skinnedMeshRenderer in skinnedMeshRenderers)
-        	{
+		{
 			if (skinnedMeshRenderer != null)
 			{
 				ProcessMesh(skinnedMeshRenderer.sharedMesh, config);
