@@ -49,7 +49,7 @@ public class VertexColorBaker : AssetPostprocessor
 		foreach(SkinnedMeshRenderer skinnedMeshRenderer in skinnedMeshRenderers)
         	{
 			if (skinnedMeshRenderer != null)
-            		{
+			{
 				ProcessMesh(skinnedMeshRenderer.sharedMesh, config);
 			}
 		}
